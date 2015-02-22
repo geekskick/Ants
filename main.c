@@ -103,6 +103,7 @@ int main(int argc, const char * argv[]) {
     //puts ant symbol/number in grid to show where it is at finish
     showAntPos(pAnt1,grid);
     showAntPos(pAnt2,grid);
+    endShow(grid,pAnt1,pAnt2);
     return 0;
 }
 
