@@ -8,6 +8,7 @@
 //
 
 #include <stdio.h>
+#include <assert.h>
 
 //grid size
 #define HEIGHT 11
@@ -61,15 +62,14 @@ void initGrid(char  grid[][WIDTH]);
 void dispGrid(char grid[][WIDTH]);
 int getMoves(char *exit_flag);
 void updateUserXY(struct ant *ant);
-void makeMove(struct ant *ant, char grid[][WIDTH]);
+void makeMove(struct ant *ant, char grid[][WIDTH], char directions[]);
 void showAntPos(struct ant *ant, char grid[][WIDTH]);
 void moveDir(struct ant *ant);
-void turnLeft(struct ant *ant);
 void dispUserXY(struct ant *ant1,struct ant *ant2,char grid[][WIDTH]);
 void isDeadTest(struct ant *ant);
 void removedMessage(struct ant *ant);
 void endShow(char grid[][WIDTH], struct ant *ant1, struct ant *ant2);
-
+void turnByInd(struct ant *ant, char directions[],char turn_direction);
 
 int main(int argc, const char * argv[]) {
 
@@ -77,6 +77,8 @@ int main(int argc, const char * argv[]) {
     struct ant ant1= enterAnt('1'), ant2 = enterAnt('2'), *pAnt1 = &ant1, *pAnt2=&ant2;
 
     char grid[HEIGHT][WIDTH],exit_flag = FALSE;
+    
+    char directions[] = {'T','L','B','R'}; //directions rotating left
 
     // initialise grid to all dots (WHITE)
     initGrid(grid);
@@ -91,8 +93,13 @@ int main(int argc, const char * argv[]) {
     
     // makes the desired moves
     for (int i = 1; i <=moves;i++){
-        makeMove(pAnt1,grid);
-        makeMove(pAnt2,grid);
+        makeMove(pAnt1,grid,directions);
+        makeMove(pAnt2,grid,directions);
+        
+        //if boths ants are dead exit
+        if( !ant1.alive && !ant2.alive ){
+            break;
+        }
     }
     
     //show the grid and end messages
@@ -105,6 +112,45 @@ int main(int argc, const char * argv[]) {
     showAntPos(pAnt2,grid);
     endShow(grid,pAnt1,pAnt2);
     return 0;
+}
+
+void turnByInd(struct ant *ant, char directions[],char turn_direction){
+    
+    // check ive passed a valid direction
+    assert(turn_direction == 'L' || turn_direction== 'R');
+    
+    //find direction of ant in array
+    for(int i = 0; i < 4; i++){
+        if(ant->dir == directions[i]){
+            
+            //if its turning left
+            if(turn_direction == 'L'){
+                
+                //loop back to beginning of array of it's at the end
+                if (i == 3){
+                    ant->dir = directions[0];
+                }
+                else{
+                    ant->dir = directions[i+1];
+                }
+            }
+            
+            //if its turning right
+            else if (turn_direction == 'R'){
+                
+                //loop to end of array if it's at the beginning
+                if (i == 0){
+                    ant->dir = directions[3];
+                }
+                else{
+                    ant->dir = directions[i-1];
+                }
+            }
+            
+            //needed to prevent direction change happening twice
+            break;
+        }
+    }
 }
 
 void endShow(char grid[][WIDTH], struct ant *ant1, struct ant *ant2){
@@ -147,44 +193,6 @@ void moveDir(struct ant *ant){
     updateUserXY(ant);
 }
 
-void turnLeft(struct ant *ant){
-    
-    //chages direction to the left
-    switch(ant->dir){
-        case 'T':
-            ant->dir = 'L';
-            break;
-        case 'L':
-            ant->dir = 'B';
-            break;
-        case 'B':
-            ant->dir = 'R';
-            break;
-        case 'R':
-            ant->dir = 'T';
-            break;
-    }
-}
-
-void turnRight(struct ant *ant){
-    
-    //changes direction to the right
-    switch(ant->dir){
-        case 'T':
-            ant->dir = 'R';
-            break;
-        case 'R':
-            ant->dir = 'B';
-            break;
-        case 'B':
-            ant->dir = 'L';
-            break;
-        case 'L':
-            ant->dir = 'T';
-            break;
-    }
-}
-
 void isDeadTest(struct ant *ant){
     
     //checks ant is still in the grid, if not kill it
@@ -201,7 +209,7 @@ void removedMessage(struct ant *ant){
     }
 }
 
-void makeMove(struct ant *ant, char grid[][WIDTH]){
+void makeMove(struct ant *ant, char grid[][WIDTH],char directions[]){
     
     struct fills fill;
     
@@ -224,26 +232,23 @@ void makeMove(struct ant *ant, char grid[][WIDTH]){
     else {
         fill.new = WHITE;
     }
-    
+        
+    //check the filler is valid
+    assert(fill.old == WHITE || fill.old == BLACK);
+        
     //change the ant direction then change colour of square
-    
     if(fill.old == BLACK){
         //if it was a black square turn the ant left
         grid[ant->real.Y][ant->real.X] = fill.new;
-        turnLeft(ant);
+        turnByInd(ant,directions,'L');
     }
 
-    else if (fill.old == WHITE){
+    else {
         //if it was a white square turn the ant right
         grid[ant->real.Y][ant->real.X] = fill.new;
-        turnRight(ant);
+        turnByInd(ant, directions,'R');
     }
-    
-    else{
-        printf("Fill error");
-        getchar();
-    
-    }
+
     }
     
 }
@@ -311,7 +316,7 @@ struct ant enterAnt(char letter){
     
     //ensures a valid user input
     do {
-    printf("Enter Ant details in the following format: X Y Direction \r\n");
+    printf("Enter Ant %c details in the following format: X Y Direction \r\n", letter);
     printf("Directions: T B L R\r\n");
     scanf("%i %i %c",&ant.user.X, &ant.user.Y, &ant.dir);
     } while( (ant.dir!= 'T' && ant.dir!='B' && ant.dir!='L' && ant.dir!='R') || (ant.user.X>WIDTH && ant.user.X <1)|| (ant.user.Y>HEIGHT && ant.user.Y <1));
