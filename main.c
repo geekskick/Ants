@@ -12,7 +12,7 @@
 
 //grid size
 #define HEIGHT 11
-#define WIDTH  11
+#define WIDTH  20
 
 //Gridsqure fillers
 #define WHITE '.'
